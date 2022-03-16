@@ -67,6 +67,21 @@ main:
 	li $v0, 10
 	syscall
 	
+reset:
+	# Reset Player:
+	# Get location of player
+	la $t5, PLAYER 
+	# Colour old location as black, let $t3 the address to draw on
+	lw $a1, 0($t5)
+	add $t3, $a1, $t0
+	sw $t1, 0($t3)
+	# Save initial player location
+	addi $t2, $zero, 1284
+	sw $t2, 0($t5)
+	# Draw inital player
+	sw $t4,	1284($t0)
+	
+	j loop
 loop:
 	# Check for  keypress
 	li $t9, 0xffff0000  
@@ -190,6 +205,7 @@ on_down:
 	j loop
 
 on_p:
+	j reset
 	j loop
 	
 	
