@@ -43,6 +43,7 @@
 .eqv P 112
 .eqv GREEN 0x00FF00
 .eqv BLACK 0x000000
+.eqv GREY 0xC0C0C0
 
 .data
 	PLAYER: .word 1284
@@ -98,6 +99,12 @@ on_left:
 	# Read location of player, let $a1 store the offset
 	lw $a1, 0($t5)
 	
+	# If player is at the border, do not do anything
+	addi $t6, $zero, 128
+	div $a1, $t6
+	mfhi $t6
+	beq $t6, $zero, loop
+	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $a1, $t0
 	sw $t1, 0($t3)
@@ -116,6 +123,13 @@ on_right:
 	
 	# Read location of player, let $a1 store the offset
 	lw $a1, 0($t5)
+	
+	# If player is at the border, do not do anything
+	addi $t6, $zero, 128
+	subi $t8, $a1, 124
+	div $t8, $t6
+	mfhi $t6
+	beq $t6, $zero, loop
 	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $a1, $t0
@@ -136,6 +150,10 @@ on_up:
 	# Read location of player, let $a1 store the offset
 	lw $a1, 0($t5)
 	
+	# If player is at the border, do not do anything
+	subi $t6, $a1, 128
+	blez $t6, loop
+	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $a1, $t0
 	sw $t1, 0($t3)
@@ -154,6 +172,10 @@ on_down:
 	
 	# Read location of player, let $a1 store the offset
 	lw $a1, 0($t5)
+	
+	# If player is at the border, do not do anything
+	subi $t6, $a1, 3968
+	bgez $t6, loop
 	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $a1, $t0
