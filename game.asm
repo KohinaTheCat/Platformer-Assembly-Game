@@ -46,7 +46,7 @@
 .eqv GREY 0xC0C0C0
 
 .data
-	PLAYER: .word 1284
+	PLAYER: .word 1280 1284 1408 1412
 	nl: 	.word '\n'
 
 .text
@@ -56,10 +56,13 @@
 main:
 	li $t0, BASE_ADDRESS
 	li $t1, BLACK
-	li $t4, GREEN
+	li $t2, GREEN
 	
 	# Draw inital player
-	sw $t4,	1284($t0)
+	sw $t2,	1280($t0)
+	sw $t2,	1284($t0)
+	sw $t2,	1408($t0)
+	sw $t2,	1412($t0)
 	
 	j loop
 	
@@ -68,18 +71,36 @@ main:
 	syscall
 	
 reset:
-	# Reset Player:
-	# Get location of player
-	la $t5, PLAYER 
-	# Colour old location as black, let $t3 the address to draw on
-	lw $a1, 0($t5)
-	add $t3, $a1, $t0
+	# Reset player:
+	# Get player offset
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
+	# Colour old player black
+	add $t3, $t6, $t0
 	sw $t1, 0($t3)
-	# Save initial player location
-	addi $t2, $zero, 1284
-	sw $t2, 0($t5)
-	# Draw inital player
-	sw $t4,	1284($t0)
+	add $t3, $t7, $t0
+	sw $t1, 0($t3)
+	add $t3, $t8, $t0
+	sw $t1, 0($t3)
+	add $t3, $t9, $t0
+	sw $t1, 0($t3)
+	# Set init. player values
+	addi $t6, $zero, 1280
+	addi $t7, $zero, 1284
+	addi $t8, $zero, 1408
+	addi $t9, $zero, 1412
+	# Save to array
+	sw $t6, 0($t5)
+	sw $t7, 4($t5)
+	sw $t8, 8($t5)
+	sw $t9, 12($t5)
+	# Colour init. player values
+	sw $t2,	1280($t0)
+	sw $t2,	1284($t0)
+	sw $t2,	1408($t0)
+	sw $t2,	1412($t0)
 	
 	j loop
 loop:
@@ -92,18 +113,18 @@ loop:
 
 keypress_happened:
 	# Check to see what key was pressed
-	lw $t2, 4($t9)
+	lw $t3, 4($t9)
 	
 	# Check left
-	beq $t2, LEFT, on_left
+	beq $t3, LEFT, on_left
 	# Check right
-	beq $t2, RIGHT, on_right
+	beq $t3, RIGHT, on_right
 	# Check up
-	beq $t2, UP, on_up
+	beq $t3, UP, on_up
 	# Check down
-	beq $t2, DOWN, on_down
+	beq $t3, DOWN, on_down
 	# Check p
-	beq $t2, P, on_p
+	beq $t3, P, on_p
 	
 	j loop
 	
@@ -111,24 +132,44 @@ on_left:
 	# Get location of player
 	la $t5, PLAYER
 	
-	# Read location of player, let $a1 store the offset
-	lw $a1, 0($t5)
+	# Read location of player, let $t6-9 store the offset
+	# [ t6 | t7 ]
+	# [ t8 | t9 ]
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
 	
 	# If player is at the border, do not do anything
-	addi $t6, $zero, 128
-	div $a1, $t6
-	mfhi $t6
-	beq $t6, $zero, loop
+	addi $t3, $zero, 128
+	div $t6, $t3
+	mfhi $t3
+	beq $t3, $zero, loop
 	
 	# Colour old location as black, let $t3 the address to draw on
-	add $t3, $a1, $t0
+	add $t3, $t7, $t0
+	sw $t1, 0($t3)
+	add $t3, $t9, $t0
 	sw $t1, 0($t3)
 
 	# Redraw player in new location
-	addi $a1, $a1, -4 # Get new offset
-	add $t3, $a1, $t0 # Get new address
-	sw $a1, 0($t5) # Save new location to array
-	sw $t4,	0($t3)# Draw player
+	# Store new offset
+	addi $t6, $t6, -4
+	addi $t7, $t7, -4
+	addi $t8, $t8, -4
+	addi $t9, $t9, -4
+	
+	# Save new location to array
+	sw $t6, 0($t5)
+	sw $t7, 4($t5)
+	sw $t8, 8($t5)
+	sw $t9, 12($t5)
+	
+	# Get new address and draw new player
+	add $t3, $t6, $t0 
+	sw $t2,	0($t3)
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
 	
 	j loop
 
@@ -136,25 +177,45 @@ on_right:
 	# Get location of player
 	la $t5, PLAYER
 	
-	# Read location of player, let $a1 store the offset
-	lw $a1, 0($t5)
+	# Read location of player, let $t6-9 store the offset
+	# [ t6 | t7 ]
+	# [ t8 | t9 ]
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
 	
 	# If player is at the border, do not do anything
-	addi $t6, $zero, 128
-	subi $t8, $a1, 124
-	div $t8, $t6
-	mfhi $t6
-	beq $t6, $zero, loop
+	addi $t3, $zero, 128
+	subi $t4, $t7, 124
+	div $t4, $t3
+	mfhi $t4
+	beq $t4, $zero, loop
 	
 	# Colour old location as black, let $t3 the address to draw on
-	add $t3, $a1, $t0
+	add $t3, $t6, $t0
 	sw $t1, 0($t3)
-
+	add $t3, $t8, $t0
+	sw $t1, 0($t3)
+	
 	# Redraw player in new location
-	addi $a1, $a1, 4 # Get new offset
-	add $t3, $a1, $t0 # Get new address
-	sw $a1, 0($t5) # Save new location to array
-	sw $t4,	0($t3)# Draw player
+	# Store new offset
+	addi $t6, $t6, 4
+	addi $t7, $t7, 4
+	addi $t8, $t8, 4
+	addi $t9, $t9, 4
+	
+	# Save new location to array
+	sw $t6, 0($t5)
+	sw $t7, 4($t5)
+	sw $t8, 8($t5)
+	sw $t9, 12($t5)
+	
+	# Get new address and draw new player
+	add $t3, $t7, $t0 
+	sw $t2,	0($t3)
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
 	
 	j loop
 
@@ -162,22 +223,42 @@ on_up:
 	# Get location of player
 	la $t5, PLAYER
 	
-	# Read location of player, let $a1 store the offset
-	lw $a1, 0($t5)
+	# Read location of player, let $t6-9 store the offset
+	# [ t6 | t7 ]
+	# [ t8 | t9 ]
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
 	
 	# If player is at the border, do not do anything
-	subi $t6, $a1, 128
-	blez $t6, loop
+	subi $t3, $t6, 128
+	blez $t3, loop
 	
 	# Colour old location as black, let $t3 the address to draw on
-	add $t3, $a1, $t0
+	add $t3, $t8, $t0
+	sw $t1, 0($t3)
+	add $t3, $t9, $t0
 	sw $t1, 0($t3)
 
 	# Redraw player in new location
-	addi $a1, $a1, -128 # Get new offset
-	add $t3, $a1, $t0 # Get new address
-	sw $a1, 0($t5) # Save new location to array
-	sw $t4,	0($t3)# Draw player
+	# Store new offset
+	addi $t6, $t6, -128
+	addi $t7, $t7, -128
+	addi $t8, $t8, -128
+	addi $t9, $t9, -128
+	
+	# Save new location to array
+	sw $t6, 0($t5)
+	sw $t7, 4($t5)
+	sw $t8, 8($t5)
+	sw $t9, 12($t5)
+	
+	# Get new address and draw new player
+	add $t3, $t6, $t0 
+	sw $t2,	0($t3)
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
 	
 	j loop
 
@@ -185,22 +266,42 @@ on_down:
 	# Get location of player
 	la $t5, PLAYER
 	
-	# Read location of player, let $a1 store the offset
-	lw $a1, 0($t5)
+	# Read location of player, let $t6-9 store the offset
+	# [ t6 | t7 ]
+	# [ t8 | t9 ]
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
 	
 	# If player is at the border, do not do anything
-	subi $t6, $a1, 3968
-	bgez $t6, loop
+	subi $t3, $t8, 3968
+	bgez $t3, loop
 	
 	# Colour old location as black, let $t3 the address to draw on
-	add $t3, $a1, $t0
+	add $t3, $t6, $t0
+	sw $t1, 0($t3)
+	add $t3, $t7, $t0
 	sw $t1, 0($t3)
 
 	# Redraw player in new location
-	addi $a1, $a1, 128 # Get new offset
-	add $t3, $a1, $t0 # Get new address
-	sw $a1, 0($t5) # Save new location to array
-	sw $t4,	0($t3)# Draw player
+	# Store new offset
+	addi $t6, $t6, 128
+	addi $t7, $t7, 128
+	addi $t8, $t8, 128
+	addi $t9, $t9, 128
+	
+	# Save new location to array
+	sw $t6, 0($t5)
+	sw $t7, 4($t5)
+	sw $t8, 8($t5)
+	sw $t9, 12($t5)
+	
+	# Get new address and draw new player
+	add $t3, $t8, $t0 
+	sw $t2,	0($t3)
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
 	
 	j loop
 
