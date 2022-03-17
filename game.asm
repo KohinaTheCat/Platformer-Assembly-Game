@@ -51,12 +51,14 @@
 .eqv C_PINK 0xFFC0CC
 .eqv YELLOW 0xecdb6f
 .eqv RED 0xFF0000
+.eqv P_RED 0xec6f6f
 
 .data
 	PLAYER: .word 3840 3844 3968 3972
 	nl: 	.word '\n'
 	HEALTH: .word 2
 	HEALTH_BAR:	.word 244
+	ENEMY:	.word 692
 
 .text
 
@@ -91,6 +93,13 @@ main:
 	# Win Object
 	li $t2, YELLOW
 	sw $t2,	2528($t0)
+	
+	# Enemies
+	li $t2, RED
+	# Enemy 1
+	sw $t2, 692($t0)
+	sw $t2, 560($t0)
+	sw $t2, 568($t0)
 	
 	li $t2, GREEN
 	
@@ -173,6 +182,12 @@ reset:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	
+	# Reset vars
+	li $t0, BASE_ADDRESS
+	li $t1, BLACK
+	li $t2, GREEN
+	li $a3, YELLOW
+	
 	j loop
 	
 loop:
@@ -182,6 +197,8 @@ loop:
 	beq $t8, 1, keypress_happened  
 	
 	jal draw_platforms
+	
+	jal enemy_fall
 	
 	jal gravity 
 	
@@ -210,109 +227,6 @@ draw_platforms:
 	li $t2, GREEN
 	
 	jr $ra
-      		
-go_down:
-	# Change flag to go down
-	addi $t7, $zero, 0 
-	sw $t7, 4($t5)
-	
-	# Save new position
-        	addi $t3 $t6 128
-      	sw $t3, 0($t5)
-	
-	# Animate
-	li $t3, GREY
-	add $t4, $t6, $t0
-	add $t4, $t4, 128
-	
-	j rest
-	
-go_up:
-	# Change flag to go up
-	addi $t7, $zero, 1 
-	sw $t7, 4($t5)
-	
-	# Check Player is on the platform
-      	lw $t8, 8($t5)
-	lw $t9, 12($t5)
-	
-	addi $t3, $t8, -128
-	beq $t8, $t3 move_player_up_too
-	addi $t3, $t8, 4
-	beq $t8, $t3 move_player_up_too
-	addi $t3, $t8, 4
-	beq $t8, $t3 move_player_up_too
-	addi $t3, $t8, 4
-	beq $t8, $t3 move_player_up_too
-	j no_player
-
-move_player_up_too:
-	# Get location of player
-	la $t5, PLAYER
-	
-	lw $s3, 0($t5)
-	lw $s4, 4($t5)
-	lw $s1, 8($t5)
-	lw $s2, 12($t5)
-	
-	# Colour old location as grey, let $t3 the address to draw on
-	li $t1, GREY
-	add $t3, $s1, $t0
-	sw $t1, 0($t3)
-	add $t3, $s2, $t0
-	sw $t1, 0($t3)
-	li $t2, BLACK
-
-	# Redraw player in new location
-	# Store new offset
-	addi $s3, $s3, -128
-	addi $s4, $s4, -128
-	addi $s1, $s1, -128
-	addi $s2, $s2, -128
-	
-	# Save new location to array
-	sw $s3, 0($t5)
-	sw $s4, 4($t5)
-	sw $s1, 8($t5)
-	sw $s2, 12($t5)
-	
-	# Get new address and draw new player
-	add $t3, $s3, $t0 
-	sw $t2,	0($t3)
-	add $t3, $s4, $t0
-	sw $t2,	0($t3)
-	
-no_player:
-	# Save new position
-        	addi $t3 $t6 -128
-      	sw $t3, 0($t5)
-	
-       	# Animate
-	li $t3, GREY
-	add $t4, $t6, $t0
-	add $t4, $t4, -128
-
-rest:
-	sw $t3, 0($t4)
-	add $t4, $t4, 4
-	sw $t3, 0($t4)
-	add $t4, $t4, 4
-	sw $t3, 0($t4)
-	add $t4, $t4, 4
-	sw $t3, 0($t4)
-	
-	li $t3, BLACK
-	add $t4, $t6, $t0
-	sw $t3, 0($t4)
-	add $t4, $t4, 4
-	sw $t3, 0($t4)
-	add $t4, $t4, 4
-	sw $t3, 0($t4)
-	add $t4, $t4, 4
-	sw $t3, 0($t4)
-
-	jr $ra
-
 
 keypress_happened:
 	li $t9, 0xffff0000 
@@ -566,68 +480,6 @@ on_up:
 	jal jump
 	
 	j loop
-
-obtain_heart:
-	sw $t1, 0($a0)
-	subi $a0, $a0, 132
-	sw $t1, 0($a0)
-	addi $a0, $a0, 8
-	sw $t1, 0($a0)
-	
-	# Add one heart to health
-	la $t4, HEALTH	
-	lw $t3, 0($t4)	
-	addi $t3 $t3 1
-	sw $t3 0($t4)
-	
-	# Update Health Bar
-	la $t4, HEALTH_BAR
-	lw $t3, 0($t4)
-	addi $t3, $t3 -4 # New offset
-	sw $t3 0($t4) # Save new offset
-	
-	add $t3, $t3, $t0 # New location
-	li $t2, C_PINK
-	sw $t2 0($t3) # Draw to Health Bar
-	
-	# Save $ra onto the stack
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	
-	# Animate Player
-	li $t2, YELLOW
-	add $t3, $t6, $t0
-	sw $t2,	0($t3)
-	jal tick
-	add $t3, $t7, $t0
-	sw $t2,	0($t3)
-	jal tick
-	add $t3, $t9, $t0
-	sw $t2,	0($t3)
-	jal tick
-	add $t3, $t8, $t0
-	sw $t2,	0($t3)
-	
-	li $t2, GREEN
-	jal tick
-	add $t3, $t6, $t0
-	sw $t2,	0($t3)
-	jal tick
-	add $t3, $t7, $t0
-	sw $t2,	0($t3)
-	jal tick
-	add $t3, $t9, $t0
-	sw $t2,	0($t3)
-	jal tick
-	add $t3, $t8, $t0
-	sw $t2,	0($t3)
-	jal tick
-	
-	# Pop saved $ra from the stack
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-
-	jr $ra
 	
 tick:
 	li $v0, 32
@@ -728,12 +580,210 @@ continue_gravity:
         
 	jr $ra
 	
+enemy_fall:
+	# Get location of enemy
+	la $t5, ENEMY
+	
+	# Read location of enemy, let $t6 store the offset
+	lw $t6, 0($t5)
+	
+	# Colour old location as black, let $t3 the address to draw on
+	add $t3, $t6, $t0
+	sw $t1, 0($t3)
+	add $t3, $t3, -132
+	sw $t1, 0($t3)
+	add $t3, $t3, 8
+	sw $t1, 0($t3)
+	
+	# If player is at the border, reset position to the top
+	subi $t3, $t6, 3968
+	bltz $t3, continue_enemy_fall
+
+	addi $t6, $zero, 692
+	sw $t6, 0($t5)
+	
+continue_enemy_fall:
+	# Redraw enemy in new location and save new offset
+	addi $t6, $t6, 128
+	sw $t6, 0($t5)
+	
+	# Get new address and draw new player
+	li $t2, RED
+	li $t4, GREEN
+	
+	add $t6, $t6, $t0
+	# If enemy head is about to touch player
+	lw $t3 0($t6)
+	beq $t3, $t4, lose_heart
+	# Else colour head
+	sw $t2,	0($t6)
+	
+	add $t6, $t6, -132
+	# If enemy head is about to touch player
+	lw $t3 0($t6)
+	beq $t3, $t4, lose_heart
+	sw $t2,	0($t6)
+	
+	add $t6, $t6, 8
+	# If enemy head is about to touch player
+	lw $t3 0($t6)
+	beq $t3, $t4, lose_heart
+	sw $t2,	0($t6)
+	
+	# Timer to "animate" fall
+	li $v0, 32
+        li $a0, JUMP_FALL_TIME
+        syscall
+        
+        li $t2, GREEN
+        
+	jr $ra
+
+lose_heart:
+	# Colour previous enemy black
+	# Read location of enemy, let $t6 store the offset
+	lw $t6, 0($t5)
+	add $t6, $t6, $t0
+	sw $t1,	0($t6)
+	add $t6, $t6, -132
+	sw $t1,	0($t6)
+	add $t6, $t6, 8
+	sw $t1,	0($t6)
+	
+	# Reset enemy to the top
+	addi $t6, $zero, 692
+	sw $t6, 0($t5)
+	
+	# Subtract one health from player
+	la $t4, HEALTH	
+	lw $t3, 0($t4)	
+	subi $t3 $t3 1
+	sw $t3 0($t4)
+	
+	# Update Health Bar
+	la $t4, HEALTH_BAR
+	lw $t3, 0($t4)
+	addi $t3, $t3 4 # New offset
+	sw $t3 0($t4) # Save new offset
+	subi $t3, $t3 4 # Draw old offset
+	add $t3, $t3, $t0 # New location
+	li $t2, LIGHT_GREY
+	sw $t2 0($t3) # Draw to Health Bar
+	
+	# Animate player
+	# Get location of player
+	la $t5, PLAYER
+	# Read location of player, let $t6-9 store the offset
+	# [ t6 | t7 ]
+	# [ t8 | t9 ]
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
+	
+	li $t2, P_RED
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	
+	li $t2, GREEN
+	jal tick
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	jal tick
+	
+	# Check if health is 0
+	la $t4, HEALTH
+	lw $t3, 0($t4)	
+	beqz $t3, lose
+	
+	j loop
+
+obtain_heart:
+	sw $t1, 0($a0)
+	subi $a0, $a0, 132
+	sw $t1, 0($a0)
+	addi $a0, $a0, 8
+	sw $t1, 0($a0)
+	
+	# Add one heart to health
+	la $t4, HEALTH	
+	lw $t3, 0($t4)	
+	addi $t3 $t3 1
+	sw $t3 0($t4)
+	
+	# Update Health Bar
+	la $t4, HEALTH_BAR
+	lw $t3, 0($t4)
+	addi $t3, $t3 -4 # New offset
+	sw $t3 0($t4) # Save new offset
+	
+	add $t3, $t3, $t0 # New location
+	li $t2, C_PINK
+	sw $t2 0($t3) # Draw to Health Bar
+	
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	# Animate Player
+	li $t2, YELLOW
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	
+	li $t2, GREEN
+	jal tick
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	jal tick
+	
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+
+	jr $ra
+
 hit_ground:
 	# Reset jump counter
 	addi $s0 $zero, 0
 	
 	j loop
-	
+
 win:
 	li $t9, 0xffff0000 
 	# Check to see what key was pressed
@@ -764,6 +814,43 @@ win:
 	sw $a3,	2004($t0)
 	
 	j win
+	
+lose:
+
+	li $t9, 0xffff0000 
+	# Check to see what key was pressed
+	lw $t3, 4($t9)
+
+	# Check p
+	beq $t3, P, on_p
+	
+	li $t2, RED
+	# Draw a
+	sw $t2,	2236($t0)
+	sw $t2,	2232($t0)
+	sw $t2,	2228($t0)
+	sw $t2,	2104($t0)
+	sw $t2,	2100($t0)
+	# Draw f
+	sw $t2,	2216($t0)
+	sw $t2,	2088($t0)
+	sw $t2,	1960($t0)
+	sw $t2,	1832($t0)
+	sw $t2,	1836($t0)
+	sw $t2,	1956($t0)
+	# Draw i
+	sw $t2,	2244($t0)
+	sw $t2,	2116($t0)
+	sw $t2,	1860($t0)
+	# Draw l
+	sw $t2,	2252($t0)
+	sw $t2,	2124($t0)
+	sw $t2,	1996($t0)
+	sw $t2,	1868($t0)
+	# Draw .
+	sw $t2,	2260($t0)
+	
+	j lose
 
 on_p:
 	j reset
