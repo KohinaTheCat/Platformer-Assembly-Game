@@ -36,8 +36,8 @@
 
 # Define my constants
 .eqv BASE_ADDRESS 0x10008000
-.eqv JUMP_FALL_TIME 50
-.eqv ANIMATION_TIME 40
+.eqv JUMP_FALL_TIME 100
+.eqv PLATFORM_MOVE_TIME 100
 .eqv LEFT 97
 .eqv RIGHT 100
 .eqv UP 119
@@ -55,6 +55,7 @@
 	PLAYER: .word 3840 3844 3968 3972
 	nl: 	.word '\n'
 	HEALTH: .word 2
+	M_PLAT1:		.word 2492 1
 
 .text
 
@@ -135,6 +136,14 @@ loop:
 	lw $t8, 0($t9) 
 	beq $t8, 1, keypress_happened  
 	
+	jal draw_platforms
+	
+	jal gravity 
+	
+	j loop
+	
+	
+draw_platforms:
 	# Draw platforms
 	li $t2, GREY
 	# Platform 1
@@ -152,12 +161,138 @@ loop:
 	sw $t2,	2780($t0)
 	sw $t2,	2784($t0)
 	sw $t2,	2788($t0)
+	# Moving Platform 1
+	
+	# jal move_platform
+	
+	# Moving Platform 2
 	
 	li $t2, GREEN
 	
-	jal gravity 
+	jr $ra
+
 	
-	j loop
+move_platform:
+	li $v0, 32
+        li $a0, PLATFORM_MOVE_TIME
+        syscall	
+        
+	# Read current position of Moving Platform 1
+	la $t5 M_PLAT1
+	
+	lw $t6, 0($t5) # Platform leftmost position
+	lw $t7, 4($t5) # Platform direction, 1 if up, 0 if down
+      	
+      	beqz $t7 going_down
+      	# going_up
+      		blt $t6 384 go_down
+      		j go_up
+      	
+      	going_down:
+      		bgt $t6 2492 go_up
+      		
+go_down:
+	# Change flag to go down
+	addi $t7, $zero, 0 
+	sw $t7, 4($t5)
+	
+	# Save new position
+        	addi $t3 $t6 128
+      	sw $t3, 0($t5)
+	
+	# Animate
+	li $t3, GREY
+	add $t4, $t6, $t0
+	add $t4, $t4, 128
+	
+	j rest
+	
+go_up:
+	# Change flag to go up
+	addi $t7, $zero, 1 
+	sw $t7, 4($t5)
+	
+	# Check Player is on the platform
+      	lw $t8, 8($t5)
+	lw $t9, 12($t5)
+	
+	addi $t3, $t8, -128
+	beq $t8, $t3 move_player_up_too
+	addi $t3, $t8, 4
+	beq $t8, $t3 move_player_up_too
+	addi $t3, $t8, 4
+	beq $t8, $t3 move_player_up_too
+	addi $t3, $t8, 4
+	beq $t8, $t3 move_player_up_too
+	j no_player
+
+move_player_up_too:
+	# Get location of player
+	la $t5, PLAYER
+	
+	lw $s3, 0($t5)
+	lw $s4, 4($t5)
+	lw $s1, 8($t5)
+	lw $s2, 12($t5)
+	
+	# Colour old location as grey, let $t3 the address to draw on
+	li $t1, GREY
+	add $t3, $s1, $t0
+	sw $t1, 0($t3)
+	add $t3, $s2, $t0
+	sw $t1, 0($t3)
+	li $t2, BLACK
+
+	# Redraw player in new location
+	# Store new offset
+	addi $s3, $s3, -128
+	addi $s4, $s4, -128
+	addi $s1, $s1, -128
+	addi $s2, $s2, -128
+	
+	# Save new location to array
+	sw $s3, 0($t5)
+	sw $s4, 4($t5)
+	sw $s1, 8($t5)
+	sw $s2, 12($t5)
+	
+	# Get new address and draw new player
+	add $t3, $s3, $t0 
+	sw $t2,	0($t3)
+	add $t3, $s4, $t0
+	sw $t2,	0($t3)
+	
+no_player:
+	# Save new position
+        	addi $t3 $t6 -128
+      	sw $t3, 0($t5)
+	
+       	# Animate
+	li $t3, GREY
+	add $t4, $t6, $t0
+	add $t4, $t4, -128
+
+rest:
+	sw $t3, 0($t4)
+	add $t4, $t4, 4
+	sw $t3, 0($t4)
+	add $t4, $t4, 4
+	sw $t3, 0($t4)
+	add $t4, $t4, 4
+	sw $t3, 0($t4)
+	
+	li $t3, BLACK
+	add $t4, $t6, $t0
+	sw $t3, 0($t4)
+	add $t4, $t4, 4
+	sw $t3, 0($t4)
+	add $t4, $t4, 4
+	sw $t3, 0($t4)
+	add $t4, $t4, 4
+	sw $t3, 0($t4)
+
+	jr $ra
+
 
 keypress_happened:
 	# Check to see what key was pressed
@@ -209,7 +344,6 @@ check_next_left:
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
 	lw $t3 0($t3)
 	bne $t3, $t4, continue_left
-	# Push offset of center of heart to stack
 	jal obtain_heart
 	
 continue_left:
@@ -275,7 +409,6 @@ check_next_right:
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
 	lw $t3 0($t3)
 	bne $t3, $t4, continue_right
-	# Push offset of center of heart to stack
 	jal obtain_heart
 	
 continue_right:
@@ -323,6 +456,40 @@ jump:
 	subi $t3, $t6, 128
 	blez $t3, loop
 	
+	# If player is about to touch the center of the heart
+	li $t4, C_PINK
+	# Check t7
+	add $t3, $t7, $t0
+	add $t3, $t3, -128
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, check_next_jump
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal obtain_heart
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+check_next_jump:
+	# Check t6
+	add $t3, $t6, $t0
+	add $t3, $t3, -128
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, continue_jump
+	
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal obtain_heart
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	
+	
+continue_jump:
+	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t8, $t0
 	sw $t1, 0($t3)
@@ -347,6 +514,17 @@ jump:
 	sw $t2,	0($t3)
 	add $t3, $t7, $t0
 	sw $t2,	0($t3)
+	
+	# Draw Platform
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	jal draw_platforms
+	
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
 	
 	# Timer to "animate" jump
 	li $v0, 32
