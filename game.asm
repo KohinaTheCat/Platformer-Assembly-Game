@@ -46,15 +46,17 @@
 .eqv GREEN 0xc8fcb6
 .eqv BLACK 0x000000
 .eqv GREY 0xC0C0C0
+.eqv LIGHT_GREY 0x63454b
 .eqv PINK 0xFFC0CB
 .eqv C_PINK 0xFFC0CC
-.eqv YELLOW 0xf2faae
+.eqv YELLOW 0xecdb6f
 .eqv RED 0xFF0000
 
 .data
 	PLAYER: .word 3840 3844 3968 3972
 	nl: 	.word '\n'
 	HEALTH: .word 2
+	HEALTH_BAR:	.word 244
 	M_PLAT1:		.word 2492 1
 
 .text
@@ -64,6 +66,7 @@
 main:
 	li $t0, BASE_ADDRESS
 	li $t1, BLACK
+	li $a3, YELLOW
 	
 	# Draw Objects
 	# Heart 1
@@ -78,6 +81,17 @@ main:
 	sw $t2,	2888($t0)
 	li $t2, C_PINK
 	sw $t2,	3012($t0)
+	
+	# Health bar
+	sw $t2,	248($t0)
+	sw $t2,	244($t0)
+	li $t2, LIGHT_GREY
+	sw $t2,	240($t0)
+	sw $t2,	236($t0)
+	
+	# Win Object
+	li $t2, YELLOW
+	sw $t2,	2528($t0)
 	
 	li $t2, GREEN
 	
@@ -97,36 +111,60 @@ main:
 	syscall
 	
 reset:
-	# Reset player:
-	# Get player offset
-	lw $t6, 0($t5)
-	lw $t7, 4($t5)
-	lw $t8, 8($t5)
-	lw $t9, 12($t5)
-	# Colour old player black
-	add $t3, $t6, $t0
-	sw $t1, 0($t3)
-	add $t3, $t7, $t0
-	sw $t1, 0($t3)
-	add $t3, $t8, $t0
-	sw $t1, 0($t3)
-	add $t3, $t9, $t0
-	sw $t1, 0($t3)
+	# Colour background black
+	add $t3, $t0, 4096
+	add $t4, $t0, 0
+	reset_loop:
+	bge $t4, $t3, reset_loop_done
+	sw $t1, 0($t4)
+	add $t4, $t4, 4
+	j reset_loop
+	
+	reset_loop_done:
+	
+	# Reset player
 	# Set init. player values
-	addi $t6, $zero, 1280
-	addi $t7, $zero, 1284
-	addi $t8, $zero, 1408
-	addi $t9, $zero, 1412
+	addi $t6, $zero, 3840
+	addi $t7, $zero, 3844
+	addi $t8, $zero, 3968
+	addi $t9, $zero, 3972
 	# Save to array
 	sw $t6, 0($t5)
 	sw $t7, 4($t5)
 	sw $t8, 8($t5)
 	sw $t9, 12($t5)
 	# Colour init. player values
-	sw $t2,	1280($t0)
-	sw $t2,	1284($t0)
-	sw $t2,	1408($t0)
-	sw $t2,	1412($t0)
+	sw $t2,	3840($t0)
+	sw $t2,	3844($t0)
+	sw $t2,	3968($t0)
+	sw $t2,	3972($t0)
+	
+	# Draw Objects
+	# Heart 1
+	li $t2, PINK
+	sw $t2,	3236($t0)
+	sw $t2,	3244($t0)
+	li $t2, C_PINK
+	sw $t2,	3368($t0)
+	# Heart 2
+	li $t2, PINK
+	sw $t2,	2880($t0)
+	sw $t2,	2888($t0)
+	li $t2, C_PINK
+	sw $t2,	3012($t0)
+	li $t2, GREEN
+	
+	# Win Object
+	li $t2, YELLOW
+	sw $t2,	2528($t0)
+	
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal draw_platforms
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
 	
 	j loop
 	
@@ -142,7 +180,7 @@ loop:
 	
 	j loop
 	
-	
+
 draw_platforms:
 	# Draw platforms
 	li $t2, GREY
@@ -295,6 +333,7 @@ rest:
 
 
 keypress_happened:
+	li $t9, 0xffff0000 
 	# Check to see what key was pressed
 	lw $t3, 4($t9)
 	
@@ -400,6 +439,7 @@ on_right:
 	add $t3, $t3, 4
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
 	lw $t3 0($t3)
+	beq $t3, $a3, win
 	bne $t3, $t4, check_next_right
 	jal obtain_heart
 check_next_right:
@@ -408,9 +448,9 @@ check_next_right:
 	add $t3, $t3, 4
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
 	lw $t3 0($t3)
+	beq $t3, $a3, win
 	bne $t3, $t4, continue_right
 	jal obtain_heart
-	
 continue_right:
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t6, $t0
@@ -487,9 +527,7 @@ check_next_jump:
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
 	
-	
 continue_jump:
-	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t8, $t0
 	sw $t1, 0($t3)
@@ -533,7 +571,6 @@ continue_jump:
 	
 	jr $ra
 
-
 on_up:
 	# Add to jump counter
 	addi $s0 $s0, 1
@@ -560,6 +597,16 @@ obtain_heart:
 	lw $t3, 0($t4)	
 	addi $t3 $t3 1
 	sw $t3 0($t4)
+	
+	# Update Health Bar
+	la $t4, HEALTH_BAR
+	lw $t3, 0($t4)
+	addi $t3, $t3 -4 # New offset
+	sw $t3 0($t4) # Save new offset
+	
+	add $t3, $t3, $t0 # New location
+	li $t2, C_PINK
+	sw $t2 0($t3) # Draw to Health Bar
 	
 	# Save $ra onto the stack
 	addi $sp, $sp, -4
@@ -636,6 +683,37 @@ gravity:
 	li $t4, GREY
 	beq $t3, $t4, hit_ground
 	
+	# If player is about to touch the center of the heart
+	li $t4, C_PINK
+	# Check t9
+	add $t3, $t9, $t0
+	add $t3, $t3, 128
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, check_next_gravity
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal obtain_heart
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+check_next_gravity:
+	# Check t8
+	add $t3, $t8, $t0
+	add $t3, $t3, 128
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, continue_gravity
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal obtain_heart
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
+	
+continue_gravity:
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t6, $t0
 	sw $t1, 0($t3)
@@ -674,6 +752,36 @@ hit_ground:
 	
 	j loop
 	
+win:
+	li $t9, 0xffff0000 
+	# Check to see what key was pressed
+	lw $t3, 4($t9)
+
+	# Check p
+	beq $t3, P, on_p
+	
+	# Draw i
+	sw $a3,	1852($t0)
+	sw $a3,	2108($t0)
+	sw $a3,	2236($t0)
+	# Drawn n
+	sw $a3,	2116($t0)
+	sw $a3,	2244($t0)
+	sw $a3,	2120($t0)
+	sw $a3,	2124($t0)
+	sw $a3,	2252($t0)
+	# Draw w
+	sw $a3,	2100($t0)
+	sw $a3,	2092($t0)
+	sw $a3,	2084($t0)
+	sw $a3,	2224($t0)
+	sw $a3,	2216($t0)
+	# Draw !
+	sw $a3,	2260($t0)
+	sw $a3,	1876($t0)
+	sw $a3,	2004($t0)
+	
+	j win
 
 on_p:
 	j reset
