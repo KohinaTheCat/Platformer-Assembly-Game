@@ -57,7 +57,6 @@
 	nl: 	.word '\n'
 	HEALTH: .word 2
 	HEALTH_BAR:	.word 244
-	M_PLAT1:		.word 2492 1
 
 .text
 
@@ -152,11 +151,19 @@ reset:
 	sw $t2,	2888($t0)
 	li $t2, C_PINK
 	sw $t2,	3012($t0)
-	li $t2, GREEN
+	
+	# Health bar
+	sw $t2,	248($t0)
+	sw $t2,	244($t0)
+	li $t2, LIGHT_GREY
+	sw $t2,	240($t0)
+	sw $t2,	236($t0)
 	
 	# Win Object
 	li $t2, YELLOW
 	sw $t2,	2528($t0)
+	
+	li $t2, GREEN
 	
 	# Save $ra onto the stack
 	addi $sp, $sp, -4
@@ -199,35 +206,10 @@ draw_platforms:
 	sw $t2,	2780($t0)
 	sw $t2,	2784($t0)
 	sw $t2,	2788($t0)
-	# Moving Platform 1
-	
-	# jal move_platform
-	
-	# Moving Platform 2
 	
 	li $t2, GREEN
 	
 	jr $ra
-
-	
-move_platform:
-	li $v0, 32
-        li $a0, PLATFORM_MOVE_TIME
-        syscall	
-        
-	# Read current position of Moving Platform 1
-	la $t5 M_PLAT1
-	
-	lw $t6, 0($t5) # Platform leftmost position
-	lw $t7, 4($t5) # Platform direction, 1 if up, 0 if down
-      	
-      	beqz $t7 going_down
-      	# going_up
-      		blt $t6 384 go_down
-      		j go_up
-      	
-      	going_down:
-      		bgt $t6 2492 go_up
       		
 go_down:
 	# Change flag to go down
