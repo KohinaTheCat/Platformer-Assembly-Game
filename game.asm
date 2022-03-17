@@ -107,6 +107,7 @@ reset:
 	sw $t2,	1412($t0)
 	
 	j loop
+	
 loop:
 	# Check for  keypress
 	li $t9, 0xffff0000  
@@ -115,10 +116,23 @@ loop:
 	
 	li $t2, GREY
 	
-	# Draw one platform
+	# Draw platforms
+	# Platform 1
 	sw $t2,	3488($t0)
 	sw $t2,	3492($t0)
 	sw $t2,	3496($t0)
+	sw $t2,	3500($t0)
+	# Platform 2
+	sw $t2,	3132($t0)
+	sw $t2,	3136($t0)
+	sw $t2,	3140($t0)
+	sw $t2,	3144($t0)
+	# Platform 3
+	sw $t2,	2776($t0)
+	sw $t2,	2780($t0)
+	sw $t2,	2784($t0)
+	sw $t2,	2788($t0)
+	
 	
 	li $t2, GREEN
 	
