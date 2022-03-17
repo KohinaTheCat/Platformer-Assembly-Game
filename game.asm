@@ -37,16 +37,18 @@
 # Define my constants
 .eqv BASE_ADDRESS 0x10008000
 .eqv JUMP_FALL_TIME 50
+.eqv ANIMATION_TIME 40
 .eqv LEFT 97
 .eqv RIGHT 100
 .eqv UP 119
 .eqv DOWN 115
 .eqv P 112
-.eqv GREEN 0x00FF00
+.eqv GREEN 0xc8fcb6
 .eqv BLACK 0x000000
 .eqv GREY 0xC0C0C0
 .eqv PINK 0xFFC0CB
 .eqv C_PINK 0xFFC0CC
+.eqv YELLOW 0xf2faae
 .eqv RED 0xFF0000
 
 .data
@@ -380,9 +382,52 @@ obtain_heart:
 	lw $t3, 0($t4)	
 	addi $t3 $t3 1
 	sw $t3 0($t4)
+	
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	
+	# Animate Player
+	li $t2, YELLOW
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	
+	li $t2, GREEN
+	jal tick
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	jal tick
+	
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
 
 	jr $ra
 	
+tick:
+	li $v0, 32
+        li $a0, JUMP_FALL_TIME
+        syscall
+        
+	jr $ra
 
 gravity:
 	# Get location of player
