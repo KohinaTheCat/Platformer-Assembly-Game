@@ -45,10 +45,14 @@
 .eqv GREEN 0x00FF00
 .eqv BLACK 0x000000
 .eqv GREY 0xC0C0C0
+.eqv PINK 0xFFC0CB
+.eqv C_PINK 0xFFC0CC
+.eqv RED 0xFF0000
 
 .data
 	PLAYER: .word 3840 3844 3968 3972
 	nl: 	.word '\n'
+	HEALTH: .word 2
 
 .text
 
@@ -57,6 +61,21 @@
 main:
 	li $t0, BASE_ADDRESS
 	li $t1, BLACK
+	
+	# Draw Objects
+	# Heart 1
+	li $t2, PINK
+	sw $t2,	3236($t0)
+	sw $t2,	3244($t0)
+	li $t2, C_PINK
+	sw $t2,	3368($t0)
+	# Heart 2
+	li $t2, PINK
+	sw $t2,	2880($t0)
+	sw $t2,	2888($t0)
+	li $t2, C_PINK
+	sw $t2,	3012($t0)
+	
 	li $t2, GREEN
 	
 	# Init. double jump flag
@@ -114,9 +133,8 @@ loop:
 	lw $t8, 0($t9) 
 	beq $t8, 1, keypress_happened  
 	
-	li $t2, GREY
-	
 	# Draw platforms
+	li $t2, GREY
 	# Platform 1
 	sw $t2,	3488($t0)
 	sw $t2,	3492($t0)
@@ -132,7 +150,6 @@ loop:
 	sw $t2,	2780($t0)
 	sw $t2,	2784($t0)
 	sw $t2,	2788($t0)
-	
 	
 	li $t2, GREEN
 	
@@ -174,6 +191,26 @@ on_left:
 	mfhi $t3
 	beq $t3, $zero, loop
 	
+	# If player is about to touch the center of the heart
+	li $t4, C_PINK
+	# Check t8
+	add $t3, $t8, $t0
+	add $t3, $t3, -4
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, check_next_left
+	jal obtain_heart
+check_next_left:
+	# Check t6
+	add $t3, $t6, $t0
+	add $t3, $t3, -4
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, continue_left
+	# Push offset of center of heart to stack
+	jal obtain_heart
+	
+continue_left:
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t7, $t0
 	sw $t1, 0($t3)
@@ -220,6 +257,26 @@ on_right:
 	mfhi $t4
 	beq $t4, $zero, loop
 	
+	# If player is about to touch the center of the heart
+	li $t4, C_PINK
+	# Check t7
+	add $t3, $t7, $t0
+	add $t3, $t3, 4
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, check_next_right
+	jal obtain_heart
+check_next_right:
+	# Check t9
+	add $t3, $t9, $t0
+	add $t3, $t3, 4
+	addi $a0, $t3, 0 # Load addr of 'center' into a0
+	lw $t3 0($t3)
+	bne $t3, $t4, continue_right
+	# Push offset of center of heart to stack
+	jal obtain_heart
+	
+continue_right:
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t6, $t0
 	sw $t1, 0($t3)
@@ -310,6 +367,22 @@ on_up:
 	jal jump
 	
 	j loop
+
+obtain_heart:
+	sw $t1, 0($a0)
+	subi $a0, $a0, 132
+	sw $t1, 0($a0)
+	addi $a0, $a0, 8
+	sw $t1, 0($a0)
+	
+	# Add one heart to health
+	la $t4, HEALTH	
+	lw $t3, 0($t4)	
+	addi $t3 $t3 1
+	sw $t3 0($t4)
+
+	jr $ra
+	
 
 gravity:
 	# Get location of player
