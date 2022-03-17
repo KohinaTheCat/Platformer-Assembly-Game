@@ -58,7 +58,8 @@
 	nl: 	.word '\n'
 	HEALTH: .word 2
 	HEALTH_BAR:	.word 244
-	ENEMY:	.word 692
+	ENEMY:	.word 692 720
+	ENEMY2:	.word	720
 
 .text
 
@@ -100,6 +101,10 @@ main:
 	sw $t2, 692($t0)
 	sw $t2, 560($t0)
 	sw $t2, 568($t0)
+	# Enemy 2
+	sw $t2,	720($t0)
+	sw $t2,	588($t0)
+	sw $t2,	596($t0)
 	
 	li $t2, GREEN
 	
@@ -132,6 +137,8 @@ reset:
 	
 	# Reset player
 	# Set init. player values
+	# Get location of player
+	la $t5, PLAYER
 	addi $t6, $zero, 3840
 	addi $t7, $zero, 3844
 	addi $t8, $zero, 3968
@@ -141,11 +148,6 @@ reset:
 	sw $t7, 4($t5)
 	sw $t8, 8($t5)
 	sw $t9, 12($t5)
-	# Colour init. player values
-	sw $t2,	3840($t0)
-	sw $t2,	3844($t0)
-	sw $t2,	3968($t0)
-	sw $t2,	3972($t0)
 	
 	# Draw Objects
 	# Heart 1
@@ -173,6 +175,11 @@ reset:
 	sw $t2,	2528($t0)
 	
 	li $t2, GREEN
+	# Colour init. player values
+	sw $t2,	3840($t0)
+	sw $t2,	3844($t0)
+	sw $t2,	3968($t0)
+	sw $t2,	3972($t0)
 	
 	# Save $ra onto the stack
 	addi $sp, $sp, -4
@@ -181,6 +188,24 @@ reset:
 	# Pop saved $ra from the stack
 	lw $ra, 0($sp)
 	addi $sp, $sp, 4
+	
+	# Reset Health
+	la $t5, HEALTH
+	addi $t6, $zero, 2
+	sw $t6, 0($t5)
+	
+	# Reset Health Bar
+	la $t5, HEALTH_BAR
+	addi $t6, $zero, 244
+	sw $t6, 0($t5)
+	
+	# Reset Enemies
+	la $t5, ENEMY
+	addi $t6, $zero, 692
+	sw $t6, 0($t5)
+	la $t5, ENEMY2
+	addi $t6, $zero, 720
+	sw $t6, 0($t5)
 	
 	# Reset vars
 	li $t0, BASE_ADDRESS
@@ -198,7 +223,17 @@ loop:
 	
 	jal draw_platforms
 	
+	# Get location of enemy
+	la $t5, ENEMY
 	jal enemy_fall
+	# Get location of enemy
+	la $t5, ENEMY2
+	jal enemy2_fall
+	
+	# Timer to "animate" fall
+	li $v0, 32
+        li $a0, JUMP_FALL_TIME
+        syscall
 	
 	jal gravity 
 	
@@ -580,10 +615,7 @@ continue_gravity:
         
 	jr $ra
 	
-enemy_fall:
-	# Get location of enemy
-	la $t5, ENEMY
-	
+enemy_fall:	
 	# Read location of enemy, let $t6 store the offset
 	lw $t6, 0($t5)
 	
@@ -629,19 +661,67 @@ continue_enemy_fall:
 	lw $t3 0($t6)
 	beq $t3, $t4, lose_heart
 	sw $t2,	0($t6)
+        
+        li $t2, GREEN
+        
+	jr $ra
+
+enemy2_fall:	
+	# Read location of enemy, let $t6 store the offset
+	lw $t6, 0($t5)
 	
-	# Timer to "animate" fall
-	li $v0, 32
-        li $a0, JUMP_FALL_TIME
-        syscall
+	# Colour old location as black, let $t3 the address to draw on
+	add $t3, $t6, $t0
+	sw $t1, 0($t3)
+	add $t3, $t3, -132
+	sw $t1, 0($t3)
+	add $t3, $t3, 8
+	sw $t1, 0($t3)
+	
+	# If player is at the border, reset position to the top
+	subi $t3, $t6, 3968
+	bltz $t3, continue_enemy2_fall
+
+	addi $t6, $zero, 720
+	sw $t6, 0($t5)
+	
+continue_enemy2_fall:
+	# Redraw enemy in new location and save new offset
+	addi $t6, $t6, 128
+	sw $t6, 0($t5)
+	
+	# Get new address and draw new player
+	li $t2, RED
+	li $t4, GREEN
+	
+	add $t6, $t6, $t0
+	# If enemy head is about to touch player
+	lw $t3 0($t6)
+	beq $t3, $t4, lose_heart
+	# Else colour head
+	sw $t2,	0($t6)
+	
+	add $t6, $t6, -132
+	# If enemy head is about to touch player
+	lw $t3 0($t6)
+	beq $t3, $t4, lose_heart
+	sw $t2,	0($t6)
+	
+	add $t6, $t6, 8
+	# If enemy head is about to touch player
+	lw $t3 0($t6)
+	beq $t3, $t4, lose_heart
+	sw $t2,	0($t6)
         
         li $t2, GREEN
         
 	jr $ra
 
 lose_heart:
+	# Enemy1
 	# Colour previous enemy black
 	# Read location of enemy, let $t6 store the offset
+	la $t5, ENEMY
 	lw $t6, 0($t5)
 	add $t6, $t6, $t0
 	sw $t1,	0($t6)
@@ -649,9 +729,22 @@ lose_heart:
 	sw $t1,	0($t6)
 	add $t6, $t6, 8
 	sw $t1,	0($t6)
-	
-	# Reset enemy to the top
+	# Reset enemies to the top
 	addi $t6, $zero, 692
+	sw $t6, 0($t5)
+	
+	# Enemy2
+	la $t5, ENEMY2
+	addi $t6, $zero, 720
+	lw $t6, 0($t5)
+	add $t6, $t6, $t0
+	sw $t1,	0($t6)
+	add $t6, $t6, -132
+	sw $t1,	0($t6)
+	add $t6, $t6, 8
+	sw $t1,	0($t6)
+	# Reset enemies to the top
+	addi $t6, $zero, 720
 	sw $t6, 0($t5)
 	
 	# Subtract one health from player
