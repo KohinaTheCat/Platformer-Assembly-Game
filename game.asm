@@ -36,6 +36,7 @@
 
 # Define my constants
 .eqv BASE_ADDRESS 0x10008000
+.eqv JUMP_FALL_TIME 50
 .eqv LEFT 97
 .eqv RIGHT 100
 .eqv UP 119
@@ -46,7 +47,7 @@
 .eqv GREY 0xC0C0C0
 
 .data
-	PLAYER: .word 1280 1284 1408 1412
+	PLAYER: .word 3840 3844 3968 3972
 	nl: 	.word '\n'
 
 .text
@@ -58,11 +59,14 @@ main:
 	li $t1, BLACK
 	li $t2, GREEN
 	
+	# Init. double jump flag
+	addi $s0 $zero, 0
+	
 	# Draw inital player
-	sw $t2,	1280($t0)
-	sw $t2,	1284($t0)
-	sw $t2,	1408($t0)
-	sw $t2,	1412($t0)
+	sw $t2,	3840($t0)
+	sw $t2,	3844($t0)
+	sw $t2,	3968($t0)
+	sw $t2,	3972($t0)
 	
 	j loop
 	
@@ -109,20 +113,21 @@ loop:
 	lw $t8, 0($t9) 
 	beq $t8, 1, keypress_happened  
 	
+	jal gravity 
+	
 	j loop
 
 keypress_happened:
 	# Check to see what key was pressed
 	lw $t3, 4($t9)
 	
+	# Check up
+	beq $t3, UP, on_up
 	# Check left
 	beq $t3, LEFT, on_left
 	# Check right
 	beq $t3, RIGHT, on_right
-	# Check up
-	beq $t3, UP, on_up
-	# Check down
-	beq $t3, DOWN, on_down
+	
 	# Check p
 	beq $t3, P, on_p
 	
@@ -219,7 +224,8 @@ on_right:
 	
 	j loop
 
-on_up:
+
+jump:		
 	# Get location of player
 	la $t5, PLAYER
 	
@@ -260,9 +266,29 @@ on_up:
 	add $t3, $t7, $t0
 	sw $t2,	0($t3)
 	
+	# Timer to "animate" jump
+	li $v0, 32
+        li $a0, JUMP_FALL_TIME
+        syscall
+	
+	jr $ra
+
+
+on_up:
+	# Add to jump counter
+	addi $s0 $s0, 1
+	addi $t3 $zero, 2
+	# If jump counter == 2 then don't jump further
+	bgt $s0 $t3 loop
+	
+	jal jump
+	jal jump
+	jal jump
+	jal jump
+	
 	j loop
 
-on_down:
+gravity:
 	# Get location of player
 	la $t5, PLAYER
 	
@@ -276,7 +302,7 @@ on_down:
 	
 	# If player is at the border, do not do anything
 	subi $t3, $t8, 3968
-	bgez $t3, loop
+	bgez $t3, hit_ground
 	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t6, $t0
@@ -303,7 +329,19 @@ on_down:
 	add $t3, $t9, $t0
 	sw $t2,	0($t3)
 	
+	# Timer to "animate" fall
+	li $v0, 32
+        li $a0, JUMP_FALL_TIME
+        syscall
+        
+	jr $ra
+	
+hit_ground:
+	# Reset jump counter
+	addi $s0 $zero, 0
+	
 	j loop
+	
 
 on_p:
 	j reset
