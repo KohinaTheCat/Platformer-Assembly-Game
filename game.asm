@@ -113,6 +113,15 @@ loop:
 	lw $t8, 0($t9) 
 	beq $t8, 1, keypress_happened  
 	
+	li $t2, GREY
+	
+	# Draw one platform
+	sw $t2,	3488($t0)
+	sw $t2,	3492($t0)
+	sw $t2,	3496($t0)
+	
+	li $t2, GREEN
+	
 	jal gravity 
 	
 	j loop
@@ -303,6 +312,19 @@ gravity:
 	# If player is at the border, do not do anything
 	subi $t3, $t8, 3968
 	bgez $t3, hit_ground
+	
+	# Check if pixel below is a GREY platform
+	add $t3, $t9, $t0
+	add $t3, $t3, 128
+	lw $t3 0($t3)
+	li $t4, GREY
+	beq $t3, $t4, hit_ground
+	
+	add $t3, $t8, $t0
+	add $t3, $t3, 128
+	lw $t3 0($t3)
+	li $t4, GREY
+	beq $t3, $t4, hit_ground
 	
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t6, $t0
