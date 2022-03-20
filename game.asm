@@ -243,21 +243,60 @@ loop:
 draw_platforms:
 	# Draw platforms
 	li $t2, GREY
+	lw $t3 ENEMY
+	
 	# Platform 1
 	sw $t2,	3488($t0)
 	sw $t2,	3492($t0)
 	sw $t2,	3496($t0)
 	sw $t2,	3500($t0)
+	
+	bgt $t3, 2000, show_middle
+	
 	# Platform 2
 	sw $t2,	3132($t0)
 	sw $t2,	3136($t0)
 	sw $t2,	3140($t0)
 	sw $t2,	3144($t0)
+	li $t2, BLACK
 	# Platform 3
 	sw $t2,	2776($t0)
 	sw $t2,	2780($t0)
 	sw $t2,	2784($t0)
 	sw $t2,	2788($t0)
+	
+	li $t2, GREEN
+	
+	jr $ra
+
+show_middle: bgt $t3, 3000, show_odd
+	# Platform 3
+	sw $t2,	2776($t0)
+	sw $t2,	2780($t0)
+	sw $t2,	2784($t0)
+	sw $t2,	2788($t0)
+	# Platform 2
+	sw $t2,	3132($t0)
+	sw $t2,	3136($t0)
+	sw $t2,	3140($t0)
+	sw $t2,	3144($t0)
+	
+	li $t2, GREEN
+	
+	jr $ra
+	
+show_odd:
+	# Platform 3
+	sw $t2,	2776($t0)
+	sw $t2,	2780($t0)
+	sw $t2,	2784($t0)
+	sw $t2,	2788($t0)
+	li $t2, BLACK
+	# Platform 2
+	sw $t2,	3132($t0)
+	sw $t2,	3136($t0)
+	sw $t2,	3140($t0)
+	sw $t2,	3144($t0)
 	
 	li $t2, GREEN
 	
@@ -729,6 +768,7 @@ lose_heart:
 	sw $t1,	0($t6)
 	add $t6, $t6, 8
 	sw $t1,	0($t6)
+
 	# Reset enemies to the top
 	addi $t6, $zero, 692
 	sw $t6, 0($t5)
