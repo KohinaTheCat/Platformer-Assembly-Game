@@ -58,8 +58,8 @@
 	nl: 	.word '\n'
 	HEALTH: .word 2
 	HEALTH_BAR:	.word 244
-	ENEMY:	.word 692 720
-	ENEMY2:	.word	720
+	ENEMY:	.word 436
+	ENEMY2:	.word	464
 
 .text
 
@@ -98,11 +98,11 @@ main:
 	# Enemies
 	li $t2, RED
 	# Enemy 1
-	sw $t2, 692($t0)
+	sw $t2, 436($t0)
 	sw $t2, 560($t0)
 	sw $t2, 568($t0)
 	# Enemy 2
-	sw $t2,	720($t0)
+	sw $t2,	464($t0)
 	sw $t2,	588($t0)
 	sw $t2,	596($t0)
 	
@@ -201,10 +201,10 @@ reset:
 	
 	# Reset Enemies
 	la $t5, ENEMY
-	addi $t6, $zero, 692
+	addi $t6, $zero, 436
 	sw $t6, 0($t5)
 	la $t5, ENEMY2
-	addi $t6, $zero, 720
+	addi $t6, $zero, 464
 	sw $t6, 0($t5)
 	
 	# Reset vars
@@ -670,7 +670,7 @@ enemy_fall:
 	subi $t3, $t6, 3968
 	bltz $t3, continue_enemy_fall
 
-	addi $t6, $zero, 692
+	addi $t6, $zero, 436
 	sw $t6, 0($t5)
 	
 continue_enemy_fall:
@@ -721,7 +721,7 @@ enemy2_fall:
 	subi $t3, $t6, 3968
 	bltz $t3, continue_enemy2_fall
 
-	addi $t6, $zero, 720
+	addi $t6, $zero, 464
 	sw $t6, 0($t5)
 	
 continue_enemy2_fall:
@@ -770,12 +770,12 @@ lose_heart:
 	sw $t1,	0($t6)
 
 	# Reset enemies to the top
-	addi $t6, $zero, 692
+	addi $t6, $zero, 436
 	sw $t6, 0($t5)
 	
 	# Enemy2
 	la $t5, ENEMY2
-	addi $t6, $zero, 720
+	addi $t6, $zero, 464
 	lw $t6, 0($t5)
 	add $t6, $t6, $t0
 	sw $t1,	0($t6)
@@ -784,7 +784,7 @@ lose_heart:
 	add $t6, $t6, 8
 	sw $t1,	0($t6)
 	# Reset enemies to the top
-	addi $t6, $zero, 720
+	addi $t6, $zero, 464
 	sw $t6, 0($t5)
 	
 	# Subtract one health from player
