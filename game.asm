@@ -52,6 +52,7 @@
 .eqv YELLOW 0xecdb6f
 .eqv RED 0xFF0000
 .eqv P_RED 0xec6f6f
+.eqv BLUE 0xabcbff
 
 .data
 	PLAYER: .word 3840 3844 3968 3972
@@ -60,70 +61,21 @@
 	HEALTH_BAR:	.word 244
 	ENEMY:	.word 436
 	ENEMY2:	.word	464
+	BOOSTED_JUMP:	.word	0
 
 .text
 
 .globl main
 	
-main:
-	li $t0, BASE_ADDRESS
-	li $t1, BLACK
-	li $a3, YELLOW
-	
-	# Draw Objects
-	# Heart 1
-	li $t2, PINK
-	sw $t2,	3236($t0)
-	sw $t2,	3244($t0)
-	li $t2, C_PINK
-	sw $t2,	3368($t0)
-	# Heart 2
-	li $t2, PINK
-	sw $t2,	2880($t0)
-	sw $t2,	2888($t0)
-	li $t2, C_PINK
-	sw $t2,	3012($t0)
-	
-	# Health bar
-	sw $t2,	248($t0)
-	sw $t2,	244($t0)
-	li $t2, LIGHT_GREY
-	sw $t2,	240($t0)
-	sw $t2,	236($t0)
-	
-	# Win Object
-	li $t2, YELLOW
-	sw $t2,	2528($t0)
-	
-	# Enemies
-	li $t2, RED
-	# Enemy 1
-	sw $t2, 436($t0)
-	sw $t2, 560($t0)
-	sw $t2, 568($t0)
-	# Enemy 2
-	sw $t2,	464($t0)
-	sw $t2,	588($t0)
-	sw $t2,	596($t0)
-	
-	li $t2, GREEN
-	
-	# Init. double jump flag
-	addi $s0 $zero, 0
-	
-	# Draw inital player
-	sw $t2,	3840($t0)
-	sw $t2,	3844($t0)
-	sw $t2,	3968($t0)
-	sw $t2,	3972($t0)
-	
-	j loop
+main:	
+	j reset
 	
 	# Terminate the program gracefully, but should never reach this
 	li $v0, 10
 	syscall
 	
 reset:
+	li $t0, BASE_ADDRESS
 	# Colour background black
 	add $t3, $t0, 4096
 	add $t4, $t0, 0
@@ -170,6 +122,14 @@ reset:
 	sw $t2,	240($t0)
 	sw $t2,	236($t0)
 	
+	# Pickup: Jump
+	li $t2, BLUE
+	sw $t2, 2820($t0)
+	sw $t2, 2692($t0)
+	sw $t2, 2564($t0)
+	sw $t2, 2696($t0)
+	sw $t2, 2688($t0)
+	
 	# Win Object
 	li $t2, YELLOW
 	sw $t2,	2528($t0)
@@ -194,6 +154,11 @@ reset:
 	addi $t6, $zero, 2
 	sw $t6, 0($t5)
 	
+	# Reset Double Jump Flag
+	la $t5, HEALTH
+	addi $t6, $zero, 0
+	sw $t6, 0($t5)
+	
 	# Reset Health Bar
 	la $t5, HEALTH_BAR
 	addi $t6, $zero, 244
@@ -212,6 +177,9 @@ reset:
 	li $t1, BLACK
 	li $t2, GREEN
 	li $a3, YELLOW
+	
+	# Init. double jump flag
+	addi $s0 $zero, 0
 	
 	j loop
 	
@@ -466,6 +434,14 @@ jump:
 	subi $t3, $t6, 128
 	blez $t3, loop
 	
+	# If player is about to touch the Jump Boost
+	li $t4, BLUE
+	# Check t6
+	add $t3, $t6, $t0
+	add $t3, $t3, -128
+	lw $t3 0($t3)
+	beq $t3, $t4, obtain_jump_boost
+
 	# If player is about to touch the center of the heart
 	li $t4, C_PINK
 	# Check t7
@@ -553,6 +529,14 @@ on_up:
 	jal jump
 	jal jump
 	
+	# Check for boosted jump
+	la $t4, BOOSTED_JUMP
+	lw $t4, 0($t4)
+	beqz $t4, loop
+	
+	jal jump
+	jal jump
+
 	j loop
 	
 tick:
@@ -756,6 +740,61 @@ continue_enemy2_fall:
         
 	jr $ra
 
+obtain_jump_boost:
+	# Black out object
+	li $t2, BLACK
+	sw $t2, 2820($t0)
+	sw $t2, 2692($t0)
+	sw $t2, 2564($t0)
+	sw $t2, 2696($t0)
+	sw $t2, 2688($t0)
+	
+	# Enable jump boost
+	la $t4, BOOSTED_JUMP
+	addi $t3, $zero, 1
+	sw $t3 0($t4)
+	
+	# Animate player
+	# Get location of player
+	la $t5, PLAYER
+	# Read location of player, let $t6-9 store the offset
+	# [ t6 | t7 ]
+	# [ t8 | t9 ]
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
+	
+	li $t2, BLUE
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	
+	li $t2, GREEN
+	jal tick
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	jal tick
+	
+	j loop
+
 lose_heart:
 	# Enemy1
 	# Colour previous enemy black
@@ -949,7 +988,6 @@ win:
 	j win
 	
 lose:
-
 	li $t9, 0xffff0000 
 	# Check to see what key was pressed
 	lw $t3, 4($t9)
