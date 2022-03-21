@@ -526,6 +526,12 @@ on_up:
 	
 	jal jump
 	jal jump
+	# Get location of enemy
+	la $t5, ENEMY
+	jal enemy_fall
+	# Get location of enemy
+	la $t5, ENEMY2
+	jal enemy2_fall
 	jal jump
 	jal jump
 	
@@ -534,6 +540,12 @@ on_up:
 	lw $t4, 0($t4)
 	beqz $t4, loop
 	
+	# Get location of enemy
+	la $t5, ENEMY
+	jal enemy_fall
+	# Get location of enemy
+	la $t5, ENEMY2
+	jal enemy2_fall
 	jal jump
 	jal jump
 
