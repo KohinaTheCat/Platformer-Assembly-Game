@@ -6,8 +6,8 @@
 # Student: Clara Chick, 1005946764, chickcla, clara.chick@mail.utoronto.ca
 # 
 # Bitmap Display Configuration: 
-# - Unit width in pixels: 4 (update this as needed)  
-# - Unit height in pixels: 4 (update this as needed) 
+# - Unit width in pixels: 8 (update this as needed)  
+# - Unit height in pixels: 8 (update this as needed) 
 # - Display width in pixels: 256 (update this as needed) 
 # - Display height in pixels: 256 (update this as needed) 
 # - Base Address for Display: 0x10008000 ($gp) 
@@ -18,9 +18,13 @@
 # 
 # Which approved features have been implemented for milestone 3? 
 # (See the assignment handout for the list of additional features) 
-# 1. (fill in the feature, if any) 
-# 2. (fill in the feature, if any) 
-# 3. (fill in the feature, if any) 
+# 1. Disapearing and reappearing platforms
+# 2. Health, track and show player health on screen
+# 3. Win condition, get to the win object
+# 4. Lose condition, lose all your health
+# 5. Double jump
+# 6. Pick-up effects: Restore player health, allow player to jump higher, freeze enemies
+# 7. Moving objects: Enemies patrol vertically
 # ... (add more if necessary) 
 # 
 # Link to video demonstration for final submission: 
