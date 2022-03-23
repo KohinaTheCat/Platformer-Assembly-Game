@@ -23,8 +23,9 @@
 # 3. Win condition, get to the win object
 # 4. Lose condition, lose all your health
 # 5. Double jump
-# 6. Pick-up effects: Restore player health, allow player to jump higher, freeze enemies
+# 6. Pick-up effects: Restore player health, allow player to jump higher, freeze (stopp) platforms (from disappearing)
 # 7. Moving objects: Enemies patrol vertically
+# 8. ?
 # ... (add more if necessary) 
 # 
 # Link to video demonstration for final submission: 
@@ -56,6 +57,7 @@
 .eqv YELLOW 0xecdb6f
 .eqv RED 0xFF0000
 .eqv P_RED 0xec6f6f
+.eqv PURPLE 0xd78ef1 
 .eqv BLUE 0xabcbff
 
 .data
@@ -66,6 +68,7 @@
 	ENEMY:	.word 436
 	ENEMY2:	.word	464
 	BOOSTED_JUMP:	.word	0
+	FREEZE_PLATFORMS:	.word	0
 
 .text
 
@@ -127,7 +130,7 @@ reset:
 	sw $t2,	236($t0)
 	
 	# Pickup: Jump
-	li $t2, BLUE
+	li $t2, PURPLE
 	sw $t2, 2820($t0)
 	sw $t2, 2692($t0)
 	sw $t2, 2564($t0)
@@ -137,6 +140,14 @@ reset:
 	# Win Object
 	li $t2, YELLOW
 	sw $t2,	2528($t0)
+	
+	# Freeze Enemies Object
+	li $t2, BLUE
+	sw $t2,	4088($t0)
+	sw $t2,	3960($t0)
+	sw $t2,	3964($t0)
+	sw $t2,	3956($t0)
+	sw $t2,	3832($t0)
 	
 	li $t2, GREEN
 	# Colour init. player values
@@ -202,6 +213,12 @@ loop:
 	la $t5, ENEMY2
 	jal enemy2_fall
 	
+	lw $t3, BOOSTED_JUMP
+	beqz $t3, skip
+	li $t2, PURPLE
+	sw $t2, 228($t0)
+
+skip:
 	# Timer to "animate" fall
 	li $v0, 32
         li $a0, JUMP_FALL_TIME
@@ -223,6 +240,10 @@ draw_platforms:
 	sw $t2,	3496($t0)
 	sw $t2,	3500($t0)
 	
+	# Check if player obtained freeze boost
+	lw $t4, FREEZE_PLATFORMS
+	
+	bnez $t4, show_all_platforms
 	bgt $t3, 2000, show_middle
 	
 	# Platform 2
@@ -269,6 +290,27 @@ show_odd:
 	sw $t2,	3136($t0)
 	sw $t2,	3140($t0)
 	sw $t2,	3144($t0)
+	
+	li $t2, GREEN
+	
+	jr $ra
+	
+show_all_platforms:
+	li $t2, GREY
+	# Platform 2
+	sw $t2,	3132($t0)
+	sw $t2,	3136($t0)
+	sw $t2,	3140($t0)
+	sw $t2,	3144($t0)
+	# Platform 3
+	sw $t2,	2776($t0)
+	sw $t2,	2780($t0)
+	sw $t2,	2784($t0)
+	sw $t2,	2788($t0)
+	
+	# Jump boost indicator
+	li $t2, BLUE
+	sw $t2, 220($t0)
 	
 	li $t2, GREEN
 	
@@ -381,7 +423,13 @@ on_right:
 	add $t3, $t3, 4
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
 	lw $t3 0($t3)
+	# Check for win
 	beq $t3, $a3, win
+	# Check for blue boost
+	li $t4, BLUE
+	beq $t3, $t4, obtain_freeze_boost
+	# Check for pink heart
+	li $t4, C_PINK
 	bne $t3, $t4, check_next_right
 	jal obtain_heart
 check_next_right:
@@ -390,9 +438,16 @@ check_next_right:
 	add $t3, $t3, 4
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
 	lw $t3 0($t3)
+	# Check for win
 	beq $t3, $a3, win
+	# Check for blue boost
+	li $t4, BLUE
+	beq $t3, $t4, obtain_freeze_boost
+	# Check for pink heart
+	li $t4, C_PINK
 	bne $t3, $t4, continue_right
 	jal obtain_heart
+	
 continue_right:
 	# Colour old location as black, let $t3 the address to draw on
 	add $t3, $t6, $t0
@@ -439,9 +494,14 @@ jump:
 	blez $t3, loop
 	
 	# If player is about to touch the Jump Boost
-	li $t4, BLUE
+	li $t4, PURPLE
 	# Check t6
 	add $t3, $t6, $t0
+	add $t3, $t3, -128
+	lw $t3 0($t3)
+	beq $t3, $t4, obtain_jump_boost
+	# Check t7
+	add $t3, $t7, $t0
 	add $t3, $t3, -128
 	lw $t3 0($t3)
 	beq $t3, $t4, obtain_jump_boost
@@ -767,6 +827,61 @@ obtain_jump_boost:
 	
 	# Enable jump boost
 	la $t4, BOOSTED_JUMP
+	addi $t3, $zero, 1
+	sw $t3 0($t4)
+	
+	# Animate player
+	# Get location of player
+	la $t5, PLAYER
+	# Read location of player, let $t6-9 store the offset
+	# [ t6 | t7 ]
+	# [ t8 | t9 ]
+	lw $t6, 0($t5)
+	lw $t7, 4($t5)
+	lw $t8, 8($t5)
+	lw $t9, 12($t5)
+	
+	li $t2, PURPLE
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	
+	li $t2, GREEN
+	jal tick
+	add $t3, $t6, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t7, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t9, $t0
+	sw $t2,	0($t3)
+	jal tick
+	add $t3, $t8, $t0
+	sw $t2,	0($t3)
+	jal tick
+	
+	j loop
+	
+obtain_freeze_boost:
+	# Black out object
+	li $t2, BLACK
+	sw $t2,	4088($t0)
+	sw $t2,	3960($t0)
+	sw $t2,	3964($t0)
+	sw $t2,	3956($t0)
+	sw $t2,	3832($t0)
+	
+	# Enable freeze enemies
+	la $t4, FREEZE_PLATFORMS
 	addi $t3, $zero, 1
 	sw $t3 0($t4)
 	
