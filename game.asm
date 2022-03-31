@@ -49,6 +49,7 @@
 .eqv DOWN 115
 .eqv P 112
 .eqv Y 121
+.eqv N 110
 .eqv GREEN 0xc8fcb6
 .eqv BLACK 0x000000
 .eqv GREY 0xC0C0C0
@@ -83,7 +84,8 @@
 main:	
 	j main_menu
 	# j reset
-	
+
+on_n:
 	# Terminate the program gracefully, but should never reach this
 	li $v0, 10
 	syscall
@@ -1329,10 +1331,22 @@ draw_start:
 	sw $t2,	2624($t0)
 	sw $t2,	2620($t0)
 	
+	# N
+	li $t2, RED
+	sw $t2,	3132($t0)
+	sw $t2,	3136($t0)
+	sw $t2,	3140($t0)
+	sw $t2,	3260($t0)
+	sw $t2,	3388($t0)
+	sw $t2,	3268($t0)
+	sw $t2,	3396($t0)
+	
 	# Check to see what key was pressed
 	li $t9, 0xffff0000 
 	lw $t3, 4($t9)
-	# Check W
+	# Check Y
 	beq $t3, Y, reset
+	# Check N
+	beq $t3, N, on_n
 	
 	j draw_start
