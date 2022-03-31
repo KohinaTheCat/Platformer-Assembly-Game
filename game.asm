@@ -24,8 +24,8 @@
 # 4. Lose condition, lose all your health
 # 5. Double jump
 # 6. Pick-up effects: Restore player health, allow player to jump higher, freeze (stopp) platforms (from disappearing)
-# 7. Moving objects: Enemies patrol vertically
-# 8. ?
+# 7. Menu Screen
+# 8. Moving objects: Enemies patrol vertically
 # ... (add more if necessary) 
 # 
 # Link to video demonstration for final submission: 
@@ -48,6 +48,7 @@
 .eqv UP 119
 .eqv DOWN 115
 .eqv P 112
+.eqv Y 121
 .eqv GREEN 0xc8fcb6
 .eqv BLACK 0x000000
 .eqv GREY 0xC0C0C0
@@ -59,6 +60,11 @@
 .eqv P_RED 0xec6f6f
 .eqv PURPLE 0xd78ef1 
 .eqv BLUE 0xabcbff
+.eqv GREEN1 0xc8e6c9
+.eqv GREEN2 0xa5d6a7
+.eqv GREEN3 0x81c784
+.eqv GREEN4 0x66bb6a
+.eqv GREEN5 0x4caf4f
 
 .data
 	PLAYER: .word 3840 3844 3968 3972
@@ -75,15 +81,21 @@
 .globl main
 	
 main:	
-	j reset
+	j main_menu
+	# j reset
 	
 	# Terminate the program gracefully, but should never reach this
 	li $v0, 10
 	syscall
-	
-reset:
+
+main_menu:
 	li $t0, BASE_ADDRESS
-	# Colour background black
+	
+	jal draw_black
+	
+	j draw_start
+
+draw_black:
 	add $t3, $t0, 4096
 	add $t4, $t0, 0
 	reset_loop:
@@ -93,6 +105,13 @@ reset:
 	j reset_loop
 	
 	reset_loop_done:
+	
+	jr $ra
+
+reset:
+	li $t0, BASE_ADDRESS
+	
+	jal draw_black
 	
 	# Reset player
 	# Set init. player values
@@ -170,7 +189,7 @@ reset:
 	sw $t6, 0($t5)
 	
 	# Reset Double Jump Flag
-	la $t5, HEALTH
+	la $t5, BOOSTED_JUMP
 	addi $t6, $zero, 0
 	sw $t6, 0($t5)
 	
@@ -1015,7 +1034,7 @@ lose_heart:
 	# Check if health is 0
 	la $t4, HEALTH
 	lw $t3, 0($t4)	
-	beqz $t3, lose
+	blez $t3, lose
 	
 	j loop
 
@@ -1155,8 +1174,165 @@ lose:
 	j lose
 
 on_p:
-	j reset
+	j main
 	j loop
 	
+draw_start:
+	li $t2, GREEN1
+	# Draw Green1
+	# S
+	sw $t2,	536($t0)
+	sw $t2,	540($t0)
+	sw $t2,	544($t0)
+	sw $t2,	660($t0)
+	# T
+	sw $t2,	552($t0)
+	sw $t2,	556($t0)
+	sw $t2,	560($t0)
+	sw $t2,	684($t0)
+	# A
+	sw $t2,	572($t0)
+	sw $t2,	576($t0)
+	sw $t2,	708($t0)
+	sw $t2,	696($t0)
+	# R
+	sw $t2,	588($t0)
+	sw $t2,	592($t0)
+	sw $t2,	596($t0)
+	sw $t2,	716($t0)
+	sw $t2,	728($t0)
+	# T
+	sw $t2,	608($t0)
+	sw $t2,	612($t0)
+	sw $t2,	616($t0)
+	sw $t2,	740($t0)
 	
+	# Draw Green2
+	li $t2, GREEN2
+	# S
+	sw $t2,	792($t0)
+	sw $t2,	796($t0)
+	sw $t2,	928($t0)
+	# T
+	sw $t2,	812($t0)
+	sw $t2,	940($t0)
+	# A
+	sw $t2,	824($t0)
+	sw $t2,	828($t0)
+	sw $t2,	832($t0)
+	sw $t2,	836($t0)
+	sw $t2,	952($t0)
+	sw $t2,	964($t0)
+	# R
+	sw $t2,	844($t0)
+	sw $t2,	848($t0)
+	sw $t2,	852($t0)
+	sw $t2,	972($t0)
+	sw $t2,	984($t0)
+	# T
+	sw $t2,	868($t0)
+	sw $t2,	996($t0)
 	
+	# Green3
+	li $t2, GREEN3
+	# S
+	sw $t2,	1052($t0)
+	sw $t2,	1048($t0)
+	sw $t2,	1044($t0)
+	# T
+	sw $t2,	1068($t0)
+	# A
+	sw $t2,	1080($t0)
+	sw $t2,	1092($t0)
+	# R
+	sw $t2,	1100($t0)
+	sw $t2,	1112($t0)
+	# T
+	sw $t2,	1124($t0)
+	# G
+	sw $t2,	1308($t0)
+	sw $t2,	1312($t0)
+	sw $t2,	1316($t0)
+	# A
+	sw $t2,	1328($t0)
+	sw $t2,	1332($t0)
+	# M
+	sw $t2,	1344($t0)
+	sw $t2,	1360($t0)
+	# E
+	sw $t2,	1368($t0)
+	sw $t2,	1372($t0)
+	sw $t2,	1376($t0)
+	sw $t2,	1380($t0)
+	
+	# Green 4
+	li $t2, GREEN4
+	# G
+	sw $t2,	1432($t0)
+	sw $t2, 1560($t0)
+	sw $t2, 1568($t0)
+	sw $t2, 1572($t0)
+	# A
+	sw $t2,	1452($t0)
+	sw $t2,	1464($t0)
+	sw $t2,	1580($t0)
+	sw $t2,	1584($t0)
+	sw $t2,	1588($t0)
+	sw $t2,	1592($t0)
+	# M
+	sw $t2,	1472($t0)
+	sw $t2,	1476($t0)
+	sw $t2,	1484($t0)
+	sw $t2,	1488($t0)
+	sw $t2,	1600($t0)
+	sw $t2,	1608($t0)
+	sw $t2,	1616($t0)
+	# E
+	sw $t2,	1496($t0)
+	sw $t2,	1624($t0)
+	sw $t2,	1628($t0)
+	
+	# Green 5
+	li $t2, GREEN5
+	# G
+	sw $t2, 1688($t0)
+	sw $t2, 1700($t0)
+	sw $t2, 1820($t0)
+	sw $t2, 1824($t0)
+	sw $t2, 1828($t0)
+	# A
+	sw $t2,	1708($t0)
+	sw $t2,	1836($t0)
+	sw $t2,	1720($t0)
+	sw $t2,	1848($t0)
+	# M
+	sw $t2,	1728($t0)
+	sw $t2,	1856($t0)
+	sw $t2,	1744($t0)
+	sw $t2,	1872($t0)
+	# E
+	sw $t2,	1752($t0)
+	sw $t2,	1880($t0)
+	sw $t2,	1884($t0)
+	sw $t2,	1888($t0)
+	sw $t2,	1892($t0)
+	
+	# Y
+	li $t2, YELLOW
+	sw $t2,	2236($t0)
+	sw $t2,	2244($t0)
+	sw $t2,	2364($t0)
+	sw $t2,	2368($t0)
+	sw $t2,	2372($t0)
+	sw $t2,	2500($t0)
+	sw $t2,	2628($t0)
+	sw $t2,	2624($t0)
+	sw $t2,	2620($t0)
+	
+	# Check to see what key was pressed
+	li $t9, 0xffff0000 
+	lw $t3, 4($t9)
+	# Check W
+	beq $t3, Y, reset
+	
+	j draw_start
