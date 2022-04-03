@@ -195,6 +195,11 @@ reset:
 	addi $t6, $zero, 0
 	sw $t6, 0($t5)
 	
+	# Reset Freeze Platforms
+	la $t5, FREEZE_PLATFORMS
+	addi $t6, $zero, 0
+	sw $t6, 0($t5)
+	
 	# Reset Health Bar
 	la $t5, HEALTH_BAR
 	addi $t6, $zero, 244
