@@ -94,10 +94,11 @@ main_menu:
 	li $t0, BASE_ADDRESS
 	
 	jal draw_black
-	
 	j draw_start
 
 draw_black:
+	li $t1, BLACK
+	
 	add $t3, $t0, 4096
 	add $t4, $t0, 0
 	reset_loop:
@@ -170,21 +171,6 @@ reset:
 	sw $t2,	3956($t0)
 	sw $t2,	3832($t0)
 	
-	li $t2, GREEN
-	# Colour init. player values
-	sw $t2,	3840($t0)
-	sw $t2,	3844($t0)
-	sw $t2,	3968($t0)
-	sw $t2,	3972($t0)
-	
-	# Save $ra onto the stack
-	addi $sp, $sp, -4
-	sw $ra, 0($sp)
-	jal draw_platforms
-	# Pop saved $ra from the stack
-	lw $ra, 0($sp)
-	addi $sp, $sp, 4
-	
 	# Reset Health
 	la $t5, HEALTH
 	addi $t6, $zero, 2
@@ -199,6 +185,21 @@ reset:
 	la $t5, FREEZE_PLATFORMS
 	addi $t6, $zero, 0
 	sw $t6, 0($t5)
+	
+	li $t2, GREEN
+	# Colour init. player values
+	sw $t2,	3840($t0)
+	sw $t2,	3844($t0)
+	sw $t2,	3968($t0)
+	sw $t2,	3972($t0)
+	
+	# Save $ra onto the stack
+	addi $sp, $sp, -4
+	sw $ra, 0($sp)
+	jal draw_platforms
+	# Pop saved $ra from the stack
+	lw $ra, 0($sp)
+	addi $sp, $sp, 4
 	
 	# Reset Health Bar
 	la $t5, HEALTH_BAR
@@ -243,6 +244,7 @@ loop:
 	beqz $t3, skip
 	li $t2, PURPLE
 	sw $t2, 228($t0)
+	li $t2, GREEN
 
 skip:
 	# Timer to "animate" fall
@@ -334,7 +336,7 @@ show_all_platforms:
 	sw $t2,	2784($t0)
 	sw $t2,	2788($t0)
 	
-	# Jump boost indicator
+	# Freeze platform indicator
 	li $t2, BLUE
 	sw $t2, 220($t0)
 	
