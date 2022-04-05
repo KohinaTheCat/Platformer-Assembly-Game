@@ -29,6 +29,8 @@
 # ... (add more if necessary) 
 # 
 # Link to video demonstration for final submission: 
+# YouTube: https://www.youtube.com/watch?v=AfkOf6h8Qhc
+# MyMedia: https://play.library.utoronto.ca/watch/74eb00930c266503fa0333e5ab8c16ec
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it! 
 # 
 # Are you OK with us sharing the video with people outside course staff? 
