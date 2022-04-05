@@ -260,7 +260,7 @@ skip:
 draw_platforms:
 	# Draw platforms
 	li $t2, GREY
-	lw $t3 ENEMY
+	lw $t3, ENEMY
 	
 	# Platform 1
 	sw $t2,	3488($t0)
@@ -385,7 +385,7 @@ on_left:
 	add $t3, $t8, $t0
 	add $t3, $t3, -4
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	bne $t3, $t4, check_next_left
 	jal obtain_heart
 check_next_left:
@@ -393,7 +393,7 @@ check_next_left:
 	add $t3, $t6, $t0
 	add $t3, $t3, -4
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	bne $t3, $t4, continue_left
 	jal obtain_heart
 	
@@ -526,12 +526,12 @@ jump:
 	# Check t6
 	add $t3, $t6, $t0
 	add $t3, $t3, -128
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	beq $t3, $t4, obtain_jump_boost
 	# Check t7
 	add $t3, $t7, $t0
 	add $t3, $t3, -128
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	beq $t3, $t4, obtain_jump_boost
 
 	# If player is about to touch the center of the heart
@@ -540,7 +540,7 @@ jump:
 	add $t3, $t7, $t0
 	add $t3, $t3, -128
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	bne $t3, $t4, check_next_jump
 	# Save $ra onto the stack
 	addi $sp, $sp, -4
@@ -611,10 +611,10 @@ continue_jump:
 
 on_up:
 	# Add to jump counter
-	addi $s0 $s0, 1
-	addi $t3 $zero, 2
+	addi $s0, $s0, 1
+	addi $t3, $zero, 2
 	# If jump counter == 2 then don't jump further
-	bgt $s0 $t3 loop
+	bgt $s0, $t3, loop
 	
 	jal jump
 	jal jump
@@ -669,13 +669,13 @@ gravity:
 	# Check if pixel below is a GREY platform
 	add $t3, $t9, $t0
 	add $t3, $t3, 128
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	li $t4, GREY
 	beq $t3, $t4, hit_ground
 	
 	add $t3, $t8, $t0
 	add $t3, $t3, 128
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	li $t4, GREY
 	beq $t3, $t4, hit_ground
 	
@@ -685,7 +685,7 @@ gravity:
 	add $t3, $t9, $t0
 	add $t3, $t3, 128
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	bne $t3, $t4, check_next_gravity
 	# Save $ra onto the stack
 	addi $sp, $sp, -4
@@ -699,7 +699,7 @@ check_next_gravity:
 	add $t3, $t8, $t0
 	add $t3, $t3, 128
 	addi $a0, $t3, 0 # Load addr of 'center' into a0
-	lw $t3 0($t3)
+	lw $t3, 0($t3)
 	bne $t3, $t4, continue_gravity
 	# Save $ra onto the stack
 	addi $sp, $sp, -4
@@ -772,20 +772,20 @@ continue_enemy_fall:
 	
 	add $t6, $t6, $t0
 	# If enemy head is about to touch player
-	lw $t3 0($t6)
+	lw $t3, 0($t6)
 	beq $t3, $t4, lose_heart
 	# Else colour head
 	sw $t2,	0($t6)
 	
 	add $t6, $t6, -132
 	# If enemy head is about to touch player
-	lw $t3 0($t6)
+	lw $t3, 0($t6)
 	beq $t3, $t4, lose_heart
 	sw $t2,	0($t6)
 	
 	add $t6, $t6, 8
 	# If enemy head is about to touch player
-	lw $t3 0($t6)
+	lw $t3, 0($t6)
 	beq $t3, $t4, lose_heart
 	sw $t2,	0($t6)
         
@@ -823,20 +823,20 @@ continue_enemy2_fall:
 	
 	add $t6, $t6, $t0
 	# If enemy head is about to touch player
-	lw $t3 0($t6)
+	lw $t3, 0($t6)
 	beq $t3, $t4, lose_heart
 	# Else colour head
 	sw $t2,	0($t6)
 	
 	add $t6, $t6, -132
 	# If enemy head is about to touch player
-	lw $t3 0($t6)
+	lw $t3, 0($t6)
 	beq $t3, $t4, lose_heart
 	sw $t2,	0($t6)
 	
 	add $t6, $t6, 8
 	# If enemy head is about to touch player
-	lw $t3 0($t6)
+	lw $t3, 0($t6)
 	beq $t3, $t4, lose_heart
 	sw $t2,	0($t6)
         
@@ -856,7 +856,7 @@ obtain_jump_boost:
 	# Enable jump boost
 	la $t4, BOOSTED_JUMP
 	addi $t3, $zero, 1
-	sw $t3 0($t4)
+	sw $t3, 0($t4)
 	
 	# Animate player
 	# Get location of player
@@ -911,7 +911,7 @@ obtain_freeze_boost:
 	# Enable freeze enemies
 	la $t4, FREEZE_PLATFORMS
 	addi $t3, $zero, 1
-	sw $t3 0($t4)
+	sw $t3, 0($t4)
 	
 	# Animate player
 	# Get location of player
@@ -988,8 +988,8 @@ lose_heart:
 	# Subtract one health from player
 	la $t4, HEALTH	
 	lw $t3, 0($t4)	
-	subi $t3 $t3 1
-	sw $t3 0($t4)
+	subi $t3, $t3, 1
+	sw $t3, 0($t4)
 	
 	# Update Health Bar
 	la $t4, HEALTH_BAR
@@ -999,7 +999,7 @@ lose_heart:
 	subi $t3, $t3 4 # Draw old offset
 	add $t3, $t3, $t0 # New location
 	li $t2, LIGHT_GREY
-	sw $t2 0($t3) # Draw to Health Bar
+	sw $t2, 0($t3) # Draw to Health Bar
 	
 	# Animate player
 	# Get location of player
@@ -1057,18 +1057,18 @@ obtain_heart:
 	# Add one heart to health
 	la $t4, HEALTH	
 	lw $t3, 0($t4)	
-	addi $t3 $t3 1
-	sw $t3 0($t4)
+	addi $t3, $t3, 1
+	sw $t3, 0($t4)
 	
 	# Update Health Bar
 	la $t4, HEALTH_BAR
 	lw $t3, 0($t4)
 	addi $t3, $t3 -4 # New offset
-	sw $t3 0($t4) # Save new offset
+	sw $t3, 0($t4) # Save new offset
 	
 	add $t3, $t3, $t0 # New location
 	li $t2, C_PINK
-	sw $t2 0($t3) # Draw to Health Bar
+	sw $t2, 0($t3) # Draw to Health Bar
 	
 	# Save $ra onto the stack
 	addi $sp, $sp, -4
@@ -1111,7 +1111,7 @@ obtain_heart:
 
 hit_ground:
 	# Reset jump counter
-	addi $s0 $zero, 0
+	addi $s0, $zero, 0
 	
 	j loop
 
