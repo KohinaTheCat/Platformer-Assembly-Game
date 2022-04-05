@@ -34,7 +34,7 @@
 # - (insert YouTube / MyMedia / other URL here). Make sure we can view it! 
 # 
 # Are you OK with us sharing the video with people outside course staff? 
-# - yes, and please share this project github link as well! 
+# - yes, https://github.com/KohinaTheCat/b58-final-project 
 # 
 # Any additional information that the TA needs to know: 
 # - (write here, if any) 
